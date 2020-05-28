@@ -1,32 +1,28 @@
 ---
 page_type: sample
 languages:
-- csharp
+- bash
 products:
-- dotnet
-description: "Add 150 character max description"
-urlFragment: "update-this-to-unique-url-stub"
+- azure, azure kubernetes service
+description: "Application to demo AKS features"
+urlFragment: "aks-demos"
 ---
 
-# Official Microsoft Sample
+# Set up an Azure Kubernetes Service cluster to test out new features
 
-<!-- 
-Guidelines on README format: https://review.docs.microsoft.com/help/onboard/admin/samples/concepts/readme-template?branch=master
+This content was prepared based on the demos presented at Microsoft Ignite 2019.
 
-Guidance on onboarding samples to docs.microsoft.com/samples: https://review.docs.microsoft.com/help/onboard/admin/samples/process/onboarding?branch=master
-
-Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
--->
-
-Give a short description for your sample here. What does it do and why is it important?
+This samples shows you how to set up an Azure Kubernetes Cluster and enable features such as Azure Policy, Azure Security Center, Windows Containers for AKS, and Virtual Nodes.
 
 ## Contents
 
-Outline the file contents of the repository. It helps users navigate the codebase, build configuration and any related assets.
-
 | File/folder       | Description                                |
 |-------------------|--------------------------------------------|
-| `src`             | Sample source code.                        |
+| `azure-policy`             | Sample code and instructions to set up a Kubernetes cluster and enable Azure Policy                     |
+| `azure-security-center`             | Sample code and instructions to set up a Kubernetes cluster and enable Azure Security Center                       |
+| `private-clusters`             | Sample code and instructions to set up a Kubernetes cluster and enable private clusters                       |
+| `virtual-node-autoscale`             | Sample code and instructions to set up a Kubernetes cluster and enable virtual node.            |
+| `windows-demo`             | Sample code and instructions to set up a Kubernetes cluster and enable Windows containers for AKS
 | `.gitignore`      | Define what to ignore at commit time.      |
 | `CHANGELOG.md`    | List of changes to the sample.             |
 | `CONTRIBUTING.md` | Guidelines for contributing to the sample. |
@@ -35,19 +31,7 @@ Outline the file contents of the repository. It helps users navigate the codebas
 
 ## Prerequisites
 
-Outline the required components and tools that a user might need to have on their machine in order to run the sample. This can be anything from frameworks, SDKs, OS versions or IDE releases.
-
-## Setup
-
-Explain how to prepare the sample once the user clones or downloads the repository. The section should outline every step necessary to install dependencies and set up any settings (for example, API keys and output folders).
-
-## Running the sample
-
-Outline step-by-step instructions to execute the sample and see its output. Include steps for executing the sample from the IDE, starting specific services in the Azure portal or anything related to the overall launch of the code.
-
-## Key concepts
-
-Provide users with more context on the tools and services used in the sample. Explain some of the code that is being used and how services interact with each other.
+The samples assume that you have an Azure subscription and a terminal to run the bash scripts for setup. Some samples have additional prequisites that are outline in their respective READMEs.
 
 ## Contributing
 

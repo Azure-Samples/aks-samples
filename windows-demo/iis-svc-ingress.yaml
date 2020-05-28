@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iis
+  labels:
+    app: iis
+spec:
+  replicas: 3
+  template:
+    metadata:
+      name: iis
+      labels:
+        app: iis
+    spec:
+      containers:
+      - name: iis
+        image: microsoft/iis:windowsservercore
+        ports:
+          - containerPort: 80
+        resources:
+          limits:
+            cpu: 1
+            memory: 800M
+          requests:
+            cpu: 1
+            memory: 300M
+      tolerations:
+      - key: "windows"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule" 
+  selector:
+    matchLabels:
+      app: iis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iis-service
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: iis
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: iis-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: iis-service
+          servicePort: 80

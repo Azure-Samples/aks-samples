@@ -1,0 +1,91 @@
+# This YAML triggers alerts for AKS detection in Azure Security Center
+
+# kube-system container
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kube-system-container
+  namespace: kube-system
+  labels:
+    name: kube-system-container
+spec:
+  containers:
+  - name: kube-system-container
+    image: nginx
+
+---
+
+# Privileged container
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-container
+  labels:
+    name: kube-system-container
+spec:
+  containers:
+  - name: privileged-container
+    image: nginx
+    securityContext:
+         privileged: true
+
+---
+
+# Sensitive mounts
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sensitive-mount-container
+  labels:
+    name: sensitive-mount-container
+spec:
+  containers:
+  - name: sensitive-mount-container
+    image: nginx
+    volumeMounts:
+        - name: sensitivemount
+          mountPath: /sensitive
+  volumes:
+  - name: sensitivemount
+    hostPath:
+      path: /etc
+      
+---
+
+# High privileges role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: high-privileges-role
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+  
+---
+
+# Create a new service account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+    name: for-binding-test
+    namespace: kube-system
+
+---
+
+# cluster-admin binding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+    name: cluster-admin-binding
+subjects:
+- kind: ServiceAccount
+  name: for-binding-test
+  namespace: kube-system
+roleRef:
+   apiGroup: rbac.authorization.k8s.io
+   kind: ClusterRole
+   name: cluster-admin

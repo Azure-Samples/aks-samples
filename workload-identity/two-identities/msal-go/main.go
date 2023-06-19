@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 	"k8s.io/klog/v2"
 )
@@ -28,42 +29,12 @@ func main() {
 		klog.Fatal("AZURE_CLIENT_ID_SET_SECRET environment variable is not set")
 	}
 
-	// Azure AD Workload Identity webhook will inject the following env vars
-	// 	AZURE_CLIENT_ID with the clientID set in the service account annotation
-	// 	AZURE_TENANT_ID with the tenantID set in the service account annotation. If not defined, then
-	// 	the tenantID provided via azure-wi-webhook-config for the webhook will be used.
-	// 	AZURE_FEDERATED_TOKEN_FILE is the service account token path
-	// 	AZURE_AUTHORITY_HOST is the AAD authority hostname
-	tenantID := os.Getenv("AZURE_TENANT_ID")
-	tokenFilePath := os.Getenv("AZURE_FEDERATED_TOKEN_FILE")
-	authorityHost := os.Getenv("AZURE_AUTHORITY_HOST")
-
-	if tenantID == "" {
-		klog.Fatal("AZURE_TENANT_ID environment variable is not set")
-	}
-	if tokenFilePath == "" {
-		klog.Fatal("AZURE_FEDERATED_TOKEN_FILE environment variable is not set")
-	}
-	if authorityHost == "" {
-		klog.Fatal("AZURE_AUTHORITY_HOST environment variable is not set")
-	}
-
-	credGetSecret, err := newClientAssertionCredential(tenantID, clientIDGetSecret, authorityHost, tokenFilePath, nil)
-	if err != nil {
-		klog.Fatal(err)
-	}
-
-	credSetSecret, err := newClientAssertionCredential(tenantID, clientIDSetSecret, authorityHost, tokenFilePath, nil)
-	if err != nil {
-		klog.Fatal(err)
-	}
-
 	// initialize keyvault client
-	clientGetSecret, err := azsecrets.NewClient(keyvaultURL, credGetSecret, &azsecrets.ClientOptions{})
+	clientGetSecret, err := getKeyVaultClient(keyvaultURL, clientIDGetSecret)
 	if err != nil {
 		klog.Fatal(err)
 	}
-	clientSetSecret, err := azsecrets.NewClient(keyvaultURL, credSetSecret, &azsecrets.ClientOptions{})
+	clientSetSecret, err := getKeyVaultClient(keyvaultURL, clientIDSetSecret)
 	if err != nil {
 		klog.Fatal(err)
 	}
@@ -90,4 +61,24 @@ func main() {
 		// wait for 60 seconds before polling again
 		time.Sleep(60 * time.Second)
 	}
+}
+
+func getKeyVaultClient(keyvaultURL, clientID string) (*azsecrets.Client, error) {
+	options := &azidentity.WorkloadIdentityCredentialOptions{
+		ClientID: clientID,
+	}
+
+	cred, err := azidentity.NewWorkloadIdentityCredential(options)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := azsecrets.NewClient(keyvaultURL, cred, &azsecrets.ClientOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	klog.InfoS("successfully got keyvault client", "keyvaultURL", keyvaultURL, "client-id", clientID)
+
+	return client, nil
 }

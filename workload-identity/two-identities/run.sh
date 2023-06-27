@@ -57,13 +57,25 @@ secretName=$(az deployment group show \
   --query properties.outputs.secretName.value \
   -o tsv)
 
+acrLoginServer=$(az deployment group show \
+  -g $resourceGroupName  \
+  -n $deploymentName \
+  --query properties.outputs.acrLoginServer.value \
+  -o tsv)
+
+az acr login -n ${acrLoginServer}
+
+pushd msal-go
+  REGISTRY="${acrLoginServer}/azure/azure-workload-identity" make all
+popd
+
 az aks get-credentials \
   --admin \
   --name $clusterName \
   --resource-group $resourceGroupName \
   --only-show-errors
 
-command="cat <<EOF | kubectl apply -f -
+cat <<EOF > workload-identity.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -71,25 +83,18 @@ metadata:
     azure.workload.identity/client-id: "${primaryUserAssignedClientId}"
   name: "${serviceAccountName}"
   namespace: "${serviceAccountNamespace}"
-EOF"
-
-az aks command invoke \
-  --name $clusterName \
-  --resource-group $resourceGroupName \
-  --command "$command"
-
-command="cat <<EOF | kubectl apply -f -
+---
 apiVersion: v1
 kind: Pod
 metadata:
   name: quick-start
   namespace: ${serviceAccountNamespace}
   labels:
-    azure.workload.identity/use: \"true\"
+    azure.workload.identity/use: "true"
 spec:
   serviceAccountName: ${serviceAccountName}
   containers:
-    - image: binxi.azurecr.io/azure/azure-workload-identity/msal-go
+    - image: ${acrLoginServer}/azure/azure-workload-identity/msal-go
       imagePullPolicy: Always
       name: oidc
       env:
@@ -103,16 +108,13 @@ spec:
         value: ${secondaryUserAssignedClientId}
   nodeSelector:
     kubernetes.io/os: linux
-EOF"
+EOF
 
-az aks command invoke \
-  --name $clusterName \
-  --resource-group $resourceGroupName \
-  --command "$command"
+kubectl apply -f workload-identity.yaml
 
-sleep 10
+set +x
 
-az aks command invoke \
-  --name $clusterName \
-  --resource-group $resourceGroupName \
-  --command "kubectl logs quick-start -n ${serviceAccountNamespace}"
+# Wait for the pod to be running
+until [[ $(kubectl get pod quick-start -n ${serviceAccountNamespace} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') == "True" ]]; do echo "waiting for pod" && sleep 10; done
+
+kubectl logs quick-start -n ${serviceAccountNamespace}

@@ -31,3 +31,6 @@ push-manifest:
 	docker manifest create --amend $(DEMO_IMAGE) $(foreach osarch, $(ALL_OS_ARCH), $(DEMO_IMAGE)-${osarch})
 	for arch in $(ALL_ARCH.linux); do docker manifest annotate --os linux --arch $${arch} $(DEMO_IMAGE) $(DEMO_IMAGE)-linux-$${arch}; done; \
 	docker manifest push --purge $(DEMO_IMAGE)
+
+.PHONY: all
+all: container-linux push-manifest

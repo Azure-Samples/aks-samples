@@ -12,6 +12,15 @@ param serviceAccountNamespace string = 'default'
 @description('The name of the service account.')
 param serviceAccountName string = 'workload-identity-sa'
 
+module acrModule '../../common/acr.bicep' = {
+  name: 'acrDeploy'
+  params: {
+    prefix: prefix
+    location: location
+    skuName: 'Standard'
+  }
+}
+
 resource myAKS 'Microsoft.ContainerService/managedClusters@2023-03-02-preview' = {
   name: '${prefix}${uniqueString(resourceGroup().id)}'
   location: location 
@@ -123,3 +132,4 @@ output serviceAccountName string = serviceAccountName
 output keyVaultName string = myKeyVault.name
 output keyVaultUri string = myKeyVault.properties.vaultUri
 output secretName string = mySecret.name
+output acrLoginServer string = acrModule.outputs.acrLoginServer

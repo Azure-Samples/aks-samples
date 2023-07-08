@@ -349,4 +349,5 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+workload-identity/one-identities/workload-identity.yaml
 workload-identity/two-identities/workload-identity.yaml

@@ -57,7 +57,7 @@ az aks get-credentials \
   --resource-group $resourceGroupName \
   --only-show-errors
 
-command="cat <<EOF | kubectl apply -f -
+cat <<EOF > workload-identity.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -65,21 +65,14 @@ metadata:
     azure.workload.identity/client-id: "${userAssignedClientId}"
   name: "${serviceAccountName}"
   namespace: "${serviceAccountNamespace}"
-EOF"
-
-az aks command invoke \
-  --name $clusterName \
-  --resource-group $resourceGroupName \
-  --command "$command"
-
-command="cat <<EOF | kubectl apply -f -
+---
 apiVersion: v1
 kind: Pod
 metadata:
   name: quick-start
   namespace: ${serviceAccountNamespace}
   labels:
-    azure.workload.identity/use: \"true\"
+    azure.workload.identity/use: "true"
 spec:
   serviceAccountName: ${serviceAccountName}
   containers:
@@ -92,14 +85,13 @@ spec:
         value: ${secretName}
   nodeSelector:
     kubernetes.io/os: linux
-EOF"
+EOF
 
-az aks command invoke \
-  --name $clusterName \
-  --resource-group $resourceGroupName \
-  --command "$command"
+kubectl apply -f workload-identity.yaml
 
-az aks command invoke \
-  --name $clusterName \
-  --resource-group $resourceGroupName \
-  --command "kubectl logs quick-start -n ${serviceAccountNamespace}"
+set +x
+
+# Wait for the pod to be running
+until [[ $(kubectl get pod quick-start -n ${serviceAccountNamespace} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') == "True" ]]; do echo "waiting for pod" && sleep 10; done
+
+kubectl logs quick-start -n ${serviceAccountNamespace}

@@ -1,0 +1,77 @@
+name: Pull Request
+on:
+  pull_request:
+    branches:
+    - master
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.changes.outputs.src }}
+      infra: ${{ steps.changes.outputs.infra }}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          wi1:
+            - 'workload-identity/one-identity/**'
+          wi2:
+            - 'workload-identity/two-identities/**'
+          diskencyptionbyok:
+            - 'disk-encryption/bring-your-own-keys-for-disks/**'
+  workload-identity-1:
+    needs: changes
+    if: ${{ needs.changes.outputs.wi1 == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run
+      run: |
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        prefix="samples$((RANDOM))"
+        pushd $GITHUB_WORKSPACE/workload-identity/one-identity
+          chmod +x ./run.sh
+          ./run.sh $prefix
+        popd
+        az group delete -n $prefix --yes --no-wait
+  workload-identity-2:
+    needs: changes
+    if: ${{ needs.changes.outputs.wi2 == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run
+      run: |
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        prefix="samples$((RANDOM))"
+        pushd $GITHUB_WORKSPACE/workload-identity/two-identities
+          chmod +x ./run.sh
+          ./run.sh $prefix
+        popd
+        az group delete -n $prefix --yes --no-wait
+  disk-encryption-byok:
+    needs: changes
+    if: ${{ needs.changes.outputs.diskencyptionbyok == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run
+      run: |
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        prefix="samples$((RANDOM))"
+        pushd $GITHUB_WORKSPACE/disk-encryption/bring-your-own-keys-for-disks
+          chmod +x ./run.sh
+          ./run.sh $prefix
+        popd
+        az group delete -n $prefix --yes --no-wait

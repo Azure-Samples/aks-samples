@@ -12,12 +12,18 @@ param serviceAccountNamespace string = 'default'
 @description('The name of the service account.')
 param serviceAccountName string = 'workload-identity-sa'
 
-module acrModule '../../common/acr.bicep' = {
-  name: 'acrDeploy'
-  params: {
-    prefix: prefix
-    location: location
-    skuName: 'Standard'
+@description('The name of the Azure Container Registry SKU.')
+param skuName string = 'Standard'
+
+resource myAcr 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
+  name: '${prefix}${uniqueString(resourceGroup().id)}'
+  location: location
+  sku: {
+    name: skuName
+  }
+  properties: {
+    adminUserEnabled: true
+    anonymousPullEnabled: true
   }
 }
 
@@ -132,4 +138,4 @@ output serviceAccountName string = serviceAccountName
 output keyVaultName string = myKeyVault.name
 output keyVaultUri string = myKeyVault.properties.vaultUri
 output secretName string = mySecret.name
-output acrLoginServer string = acrModule.outputs.acrLoginServer
+output acrLoginServer string = myAcr.properties.loginServer

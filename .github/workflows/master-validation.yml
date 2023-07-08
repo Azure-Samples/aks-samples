@@ -1,0 +1,54 @@
+name: Master Validation
+on:
+  push:
+    branches:
+    - master
+jobs:
+  workload-identity-1:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run
+      run: |
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        prefix="samples$((RANDOM))"
+        pushd $GITHUB_WORKSPACE/workload-identity/one-identity
+          chmod +x ./run.sh
+          ./run.sh $prefix
+        popd
+        az group delete -n $prefix --yes --no-wait
+  workload-identity-2:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run
+      run: |
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        prefix="samples$((RANDOM))"
+        pushd $GITHUB_WORKSPACE/workload-identity/two-identities
+          chmod +x ./run.sh
+          ./run.sh $prefix
+        popd
+        az group delete -n $prefix --yes --no-wait
+  disk-encryption-byok:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run
+      run: |
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        prefix="samples$((RANDOM))"
+        pushd $GITHUB_WORKSPACE/disk-encryption/bring-your-own-keys-for-disks
+          chmod +x ./run.sh
+          ./run.sh $prefix
+        popd
+        az group delete -n $prefix --yes --no-wait

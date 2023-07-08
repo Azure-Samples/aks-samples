@@ -6,9 +6,12 @@ on:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     outputs:
-      src: ${{ steps.changes.outputs.src }}
-      infra: ${{ steps.changes.outputs.infra }}
+      wi1: ${{ steps.changes.outputs.wi1 }}
+      wi2: ${{ steps.changes.outputs.wi2 }}
+      diskencyptionbyok: ${{ steps.changes.outputs.diskencyptionbyok }}
     steps:
     - uses: actions/checkout@v3
     - uses: dorny/paths-filter@v2

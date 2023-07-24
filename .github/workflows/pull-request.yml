@@ -11,7 +11,8 @@ jobs:
     outputs:
       wi1: ${{ steps.changes.outputs.wi1 }}
       wi2: ${{ steps.changes.outputs.wi2 }}
-      diskencyptionbyok: ${{ steps.changes.outputs.diskencyptionbyok }}
+      disk-encyption-byok: ${{ steps.changes.outputs.disk-encyption-byok }}
+      security-checklist-secrets: ${{ steps.changes.outputs.security-checklist-secrets }}
     steps:
     - uses: actions/checkout@v3
     - uses: dorny/paths-filter@v2
@@ -22,8 +23,10 @@ jobs:
             - 'workload-identity/one-identity/**'
           wi2:
             - 'workload-identity/two-identities/**'
-          diskencyptionbyok:
+          disk-encyption-byok:
             - 'disk-encryption/bring-your-own-keys-for-disks/**'
+          security-checklist-secrets:
+            - 'security-checklist/secrets/**'
   workload-identity-1:
     needs: changes
     if: ${{ needs.changes.outputs.wi1 == 'true' }}
@@ -62,7 +65,7 @@ jobs:
         az group delete -n $prefix --yes --no-wait
   disk-encryption-byok:
     needs: changes
-    if: ${{ needs.changes.outputs.diskencyptionbyok == 'true' }}
+    if: ${{ needs.changes.outputs.disk-encyption-byok == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -74,6 +77,24 @@ jobs:
         az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         prefix="aks$((RANDOM))"
         pushd $GITHUB_WORKSPACE/disk-encryption/bring-your-own-keys-for-disks
+          chmod +x ./run.sh
+          ./run.sh $prefix
+        popd
+        az group delete -n $prefix --yes --no-wait
+  security-checklist-secrets:
+    needs: changes
+    if: ${{ needs.changes.outputs.security-checklist-secrets == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run
+      run: |
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        prefix="aks$((RANDOM))"
+        pushd $GITHUB_WORKSPACE/security-checklist/secrets
           chmod +x ./run.sh
           ./run.sh $prefix
         popd

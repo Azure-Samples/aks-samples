@@ -8,6 +8,8 @@ description: "Add 150 character max description"
 urlFragment: "update-this-to-unique-url-stub"
 ---
 
+[![Master Validation](https://github.com/bingosummer/aks-samples/actions/workflows/master-validation.yml/badge.svg)](https://github.com/bingosummer/aks-samples/actions/workflows/master-validation.yml)
+
 # Official Microsoft Sample
 
 <!-- 

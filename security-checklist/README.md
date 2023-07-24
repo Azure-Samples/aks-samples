@@ -1,0 +1,1 @@
+The Kubernetes document provides a [security checklist](https://kubernetes.io/docs/concepts/security/security-checklist/). This folder follows the checklist to provide sameples based on different topics.

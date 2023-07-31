@@ -13,6 +13,7 @@ jobs:
       wi2: ${{ steps.changes.outputs.wi2 }}
       disk-encyption-byok: ${{ steps.changes.outputs.disk-encyption-byok }}
       security-checklist-secrets: ${{ steps.changes.outputs.security-checklist-secrets }}
+      security-features: ${{ steps.changes.outputs.security-features }}
     steps:
     - uses: actions/checkout@v3
     - uses: dorny/paths-filter@v2
@@ -27,6 +28,8 @@ jobs:
             - 'disk-encryption/bring-your-own-keys-for-disks/**'
           security-checklist-secrets:
             - 'security-checklist/secrets/**'
+          security-features:
+            - 'security-features/**'
   workload-identity-1:
     needs: changes
     if: ${{ needs.changes.outputs.wi1 == 'true' }}
@@ -95,6 +98,24 @@ jobs:
         az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         prefix="aks$((RANDOM))"
         pushd $GITHUB_WORKSPACE/security-checklist/secrets
+          chmod +x ./run.sh
+          ./run.sh $prefix
+        popd
+        az group delete -n $prefix --yes --no-wait
+  security-features:
+    needs: changes
+    if: ${{ needs.changes.outputs.security-features == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run
+      run: |
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        prefix="aks$((RANDOM))"
+        pushd $GITHUB_WORKSPACE/security-features/bicep
           chmod +x ./run.sh
           ./run.sh $prefix
         popd

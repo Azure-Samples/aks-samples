@@ -1,0 +1,1 @@
+The sample will enable security features for AKS cluster.

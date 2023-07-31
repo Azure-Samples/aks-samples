@@ -1,0 +1,168 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.19.5.34762",
+      "templateHash": "15274794029859152762"
+    }
+  },
+  "parameters": {
+    "prefix": {
+      "type": "string",
+      "defaultValue": "aks"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location of the resource."
+      }
+    },
+    "agentVMSize": {
+      "type": "string",
+      "defaultValue": "standard_d2s_v3",
+      "metadata": {
+        "description": "The size of the Virtual Machine."
+      }
+    },
+    "serviceAccountNamespace": {
+      "type": "string",
+      "defaultValue": "default",
+      "metadata": {
+        "description": "The name of the service account namespace."
+      }
+    },
+    "serviceAccountName": {
+      "type": "string",
+      "defaultValue": "workload-identity-sa",
+      "metadata": {
+        "description": "The name of the service account."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerService/managedClusters",
+      "apiVersion": "2023-05-02-preview",
+      "name": "[format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))))]": {}
+        }
+      },
+      "properties": {
+        "dnsPrefix": "[format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))]",
+        "agentPoolProfiles": [
+          {
+            "name": "agentpool",
+            "osDiskSizeGB": 0,
+            "count": 1,
+            "vmSize": "[parameters('agentVMSize')]",
+            "osType": "Linux",
+            "mode": "System"
+          }
+        ],
+        "oidcIssuerProfile": {
+          "enabled": true
+        },
+        "securityProfile": {
+          "azureKeyVaultKms": {
+            "enabled": true,
+            "keyId": "[reference(resourceId('Microsoft.KeyVault/vaults/keys', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)), format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))), '2023-02-01').keyUriWithVersion]"
+          },
+          "imageCleaner": {
+            "enabled": true,
+            "intervalHours": 24
+          },
+          "workloadIdentity": {
+            "enabled": true
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)))]",
+        "[resourceId('Microsoft.KeyVault/vaults/keys', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)), format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials",
+      "apiVersion": "2023-01-31",
+      "name": "[format('{0}/{1}', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)), format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)))]",
+      "properties": {
+        "audiences": [
+          "api://AzureADTokenExchange"
+        ],
+        "issuer": "[reference(resourceId('Microsoft.ContainerService/managedClusters', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))), '2023-05-02-preview').oidcIssuerProfile.issuerURL]",
+        "subject": "[format('system:serviceaccount:{0}:{1}', parameters('serviceAccountNamespace'), parameters('serviceAccountName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerService/managedClusters', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-02-01",
+      "name": "[format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))), '2023-01-31').principalId]",
+            "permissions": {
+              "keys": [
+                "encrypt",
+                "decrypt"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/keys",
+      "apiVersion": "2023-02-01",
+      "name": "[format('{0}/{1}', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)), format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)))]",
+      "properties": {
+        "kty": "RSA",
+        "keySize": 2048,
+        "keyOps": [
+          "encrypt",
+          "decrypt"
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "clusterName": {
+      "type": "string",
+      "value": "[format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))]"
+    },
+    "keyId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.KeyVault/vaults/keys', format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id)), format('{0}{1}', parameters('prefix'), uniqueString(resourceGroup().id))), '2023-02-01').keyUriWithVersion]"
+    }
+  }
+}

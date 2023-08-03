@@ -132,12 +132,16 @@ jobs:
       uses: hashicorp/setup-terraform@v2
     
     - name: ls
-      run: ls -lt
+      run: |
+        pwd
+        ls -lt
     # - name: Cd to security-features/terraform
     #   run: cd security-features/terraform
 
     - name: Terraform init 
-      run: terraform init -upgrade
+      run: |
+        pwd
+        terraform init -upgrade
 
     - name: Terraform plan
       run: terraform plan -out main.tfplan

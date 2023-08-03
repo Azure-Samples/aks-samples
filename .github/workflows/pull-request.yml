@@ -3,11 +3,6 @@ on:
   pull_request:
     branches:
     - master
-env:
-  ARM_CLIENT_ID: ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }}
-  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -133,49 +128,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Check secrets
+    - name: Run
       run: |
-        echo $ARM_CLIENT_ID
-        echo $ARM_CLIENT_SECRET
-        echo $ARM_TENANT_ID
-        echo $ARM_SUBSCRIPTION_ID
-        echo ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }}
-        echo ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }}
-        echo ${{ secrets.AZURE_TENANT_ID }}
-        echo ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    - name: Setup terraform
-      uses: hashicorp/setup-terraform@v2
-
-    - name: Terraform init 
-      working-directory: ./security-features/terraform
-      run: |
-        pwd
-        terraform init -upgrade
-
-    - name: Terraform plan
-      working-directory: ./security-features/terraform
-      env:
-        ARM_CLIENT_ID: ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }}
-        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      run: |
-        echo $ARM_CLIENT_ID
-        echo $ARM_CLIENT_SECRET
-        echo $ARM_TENANT_ID
-        echo $ARM_SUBSCRIPTION_ID
-        terraform plan -out main.tfplan
-      continue-on-error: false
-
-    - name: Terraform apply Plan
-      working-directory: ./security-features/terraform
-      run: terraform apply main.tfplan 
-
-    - name: Terraform output
-      working-directory: ./security-features/terraform
-      run: terraform output 
-
-    - name: Cleanup resources
-      working-directory: ./security-features/terraform
-      run: terraform destroy --auto-approve 
+        az cloud set -n AzureCloud
+        az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+        az account set -s ${{ secrets.AZURE_SUBSCRIPTION_ID }}

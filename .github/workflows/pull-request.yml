@@ -130,24 +130,20 @@ jobs:
 
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v2
-    
-    - name: ls
-      run: |
-        pwd
-        ls -lt
-    # - name: Cd to security-features/terraform
-    #   run: cd security-features/terraform
 
     - name: Terraform init 
+      working-directory: ./security-features/terraform
       run: |
         pwd
         terraform init -upgrade
 
     - name: Terraform plan
+      working-directory: ./security-features/terraform
       run: terraform plan -out main.tfplan
       continue-on-error: false
 
     - name: Terraform apply Plan
+      working-directory: ./security-features/terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }}
@@ -156,7 +152,9 @@ jobs:
       run: terraform apply main.tfplan 
 
     - name: Terraform output
+      working-directory: ./security-features/terraform
       run: terraform output 
 
     - name: Cleanup resources
+      working-directory: ./security-features/terraform
       run: terraform destroy --auto-approve 

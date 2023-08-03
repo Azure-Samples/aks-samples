@@ -131,8 +131,10 @@ jobs:
     - name: Setup terraform
       uses: hashicorp/setup-terraform@v2
     
-    - name: Cd to security-features/terraform
-      run: cd security-features/terraform
+    - name: ls
+      run: ls -lt
+    # - name: Cd to security-features/terraform
+    #   run: cd security-features/terraform
 
     - name: Terraform init 
       run: terraform init -upgrade

@@ -351,3 +351,9 @@ MigrationBackup/
 
 workload-identity/one-identities/workload-identity.yaml
 workload-identity/two-identities/workload-identity.yaml
+
+# Igore terrafrom dependency & builds
+*.tfplan
+*.tfstate*
+.terraform*
+.terraform*/

@@ -102,7 +102,7 @@ jobs:
           ./run.sh $prefix
         popd
         az group delete -n $prefix --yes --no-wait
-  security-features:
+  security-features-bicep:
     needs: changes
     if: ${{ needs.changes.outputs.security-features == 'true' }}
     runs-on: ubuntu-latest
@@ -120,3 +120,37 @@ jobs:
           ./run.sh $prefix
         popd
         az group delete -n $prefix --yes --no-wait
+  security-features-terraform:
+    needs: changes
+    if: ${{ needs.changes.outputs.security-features == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup terraform
+      uses: hashicorp/setup-terraform@v2
+    
+    - name: Cd to security-features/terraform
+      run: cd security-features/terraform
+
+    - name: Terraform init 
+      run: terraform init -upgrade
+
+    - name: Terraform plan
+      run: terraform plan -out main.tfplan
+      continue-on-error: false
+
+    - name: Terraform apply Plan
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_SERVICE_PRINCIPAL_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      run: terraform apply main.tfplan 
+
+    - name: Terraform output
+      run: terraform output 
+
+    - name: Cleanup resources
+      run: terraform destroy --auto-approve 

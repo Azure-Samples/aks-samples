@@ -1,0 +1,13 @@
+# Privileged container
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-container
+  labels:
+    name: kube-system-container
+spec:
+  containers:
+  - name: privileged-container
+    image: nginx
+    securityContext:
+         privileged: true

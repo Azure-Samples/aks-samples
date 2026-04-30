@@ -8,4 +8,5 @@ IDENTITY_PRINCIPAL_ID=$(az identity show --resource-group ${RG_NAME} --name ${ID
 az role assignment create \
 --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.Network/virtualNetworks/${VNET_NAME}" \
 --role "Network Contributor" \
---assignee ${IDENTITY_PRINCIPAL_ID}
+--assignee-object-id "${IDENTITY_PRINCIPAL_ID}" \
+--assignee-principal-type ServicePrincipal

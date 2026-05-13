@@ -1,0 +1,1 @@
+kubectl get pods -l app=online-store

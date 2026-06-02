@@ -1,4 +1,4 @@
-@description('The location of the managed userNode resource.')
+@description('The location of the managed cluster resource.')
 param location string = resourceGroup().location
 
 @description('The name of the virtual network.')
@@ -25,7 +25,7 @@ param systemNodeSubnetName string = 'systemNodeSubnet'
 @description('The subnet prefix of the system node subnet.')
 param systemNodeSubnetPrefix string = '172.19.0.64/26'
 
-// Virtual network with an API server subnet and a userNode subnet
+// Virtual network with an API server subnet, a user node subnet, and a system node subnet
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
     name: vnetName
     location: location

@@ -11,5 +11,10 @@ az network vnet subnet create --resource-group ${RG_NAME} \
 
 az network vnet subnet create --resource-group ${RG_NAME} \
 --vnet-name ${VNET_NAME} \
---name clusterSubnet \
+--name userNodeSubnet \
 --address-prefixes 172.19.1.0/24
+
+az network vnet subnet create --resource-group ${RG_NAME} \
+--vnet-name ${VNET_NAME} \
+--name managedSystemNodeSubnet \
+--address-prefixes 172.19.0.64/26

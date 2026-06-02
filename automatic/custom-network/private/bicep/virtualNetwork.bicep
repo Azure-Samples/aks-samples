@@ -1,4 +1,4 @@
-@description('The location of the managed cluster resource.')
+@description('The location of the managed userNode resource.')
 param location string = resourceGroup().location
 
 @description('The name of the virtual network.')
@@ -13,13 +13,19 @@ param apiServerSubnetName string = 'apiServerSubnet'
 @description('The subnet prefix of the API server subnet.')
 param apiServerSubnetPrefix string = '172.19.0.0/28'
 
-@description('The name of the cluster subnet.')
-param clusterSubnetName string = 'clusterSubnet'
+@description('The name of the user node subnet.')
+param userNodeSubnetName string = 'userNodeSubnet'
 
-@description('The subnet prefix of the cluster subnet.')
-param clusterSubnetPrefix string = '172.19.1.0/24'
+@description('The subnet prefix of the user node subnet.')
+param userNodeSubnetPrefix string = '172.19.1.0/24'
 
-// Virtual network with an API server subnet and a cluster subnet
+@description('The name of the system node subnet.')
+param systemNodeSubnetName string = 'systemNodeSubnet'
+
+@description('The subnet prefix of the system node subnet.')
+param systemNodeSubnetPrefix string = '172.19.0.64/26'
+
+// Virtual network with an API server subnet and a userNode subnet
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
     name: vnetName
     location: location
@@ -35,9 +41,15 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
                 }
             }
             {
-                name: clusterSubnetName
+                name: userNodeSubnetName
                 properties: {
-                    addressPrefix: clusterSubnetPrefix
+                    addressPrefix: userNodeSubnetPrefix
+                }
+            }
+            {
+                name: systemNodeSubnetName
+                properties: {
+                    addressPrefix: systemNodeSubnetPrefix
                 }
             }
         ]
@@ -45,4 +57,5 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
 }
 
 output apiServerSubnetId string = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, apiServerSubnetName)
-output clusterSubnetId string = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, clusterSubnetName)
+output userNodeSubnetId string = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, userNodeSubnetName)
+output systemNodeSubnetId string = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, systemNodeSubnetName)

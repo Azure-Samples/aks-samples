@@ -7,8 +7,11 @@ param location string = resourceGroup().location
 @description('The resource ID of the API server subnet.')
 param apiServerSubnetId string
 
-@description('The resource ID of the cluster subnet.')
-param clusterSubnetId string
+@description('The resource ID of the user node subnet.')
+param userNodeSubnetId string
+
+@description('The resource ID of the system node subnet.')
+param systemNodeSubnetId string
 
 @description('The resource ID of the user assigned managed identity.')
 param uamiId string
@@ -21,19 +24,15 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-03-02-preview' = {
 	name: 'Automatic'
   }
   properties: {
-    agentPoolProfiles: [
-      {
-        name: 'systempool'
-        mode: 'System'
-	      count: 3
-        vnetSubnetID: clusterSubnetId
-      }
-    ]
     apiServerAccessProfile: {
-        subnetId: apiServerSubnetId
+      subnetId: apiServerSubnetId
     }
     networkProfile: {
       outboundType: 'loadBalancer'
+    }
+    hostedSystemProfile: {
+      systemNodeSubnetID: systemNodeSubnetId
+      nodeSubnetID: userNodeSubnetId
     }
   }
   identity: {
